@@ -2,139 +2,117 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8">
-	<title>Document</title>	
-	<script src="/static/js/jquery.js"></script>
-	<script src="/static/js/amcharts.js"></script>
-	<script src="/static/js/serial.js"></script>
-	<script src="/static/js/light.js"></script>
+	<title>Tehcnopark internet speed</title>
+	<script src="/js/global.js"></script>
+	<script src="/js/jquery.js"></script>
+
+    <script src="http://www.amcharts.com/lib/3/amcharts.js"></script>
+    <script src="http://www.amcharts.com/lib/3/serial.js"></script>
+    <script src="http://www.amcharts.com/lib/3/themes/light.js"></script>
+
+	<script src="/js/mongolab.js"></script>
+	<script src="/js/api.js"></script>
+
+    <style>
+        html, body {
+            margin: 0;
+            width: 100%;
+            height: 90%;
+        }
+
+        #chartdiv {
+            width: 100%; height: 100%; margin: 10px auto;
+        }
+    </style>
 </head>
 <body>
-	<h1 style="text-align: center;"> Скорость </h1>
-	<div id="speedchart" 
-		style="width: 90%; height: 500px; margin: 10px auto;"></div>
+	<div id="chartdiv"></div>
 
-	<h1 style="text-align: center;"> Пинги </h1>
-	<div id="pingchart" 
-		style="width: 90%; height: 500px; margin: 10px auto;"></div>
-	
 	<script>
-		function getStatistic(callback) {
-			$.get("/stat/", function(data) {
-			  	callback(data['data']);
-			});
-		}
+        var timestampField = 'timestamp';
+        var ignoreFields = ['timestamp', 'date', 'size', '_id', 'time'];
 
-		getStatistic(function(data) {
+        var fieldNames = {
+            'speed': "Скорость",
+            'pingMin': "Пинг min",
+            'pingAvg': "Пинг avg",
+            'pingMax': "Пинг max",
+            'pingLossPercent': "Потери пакетов"
+        };
 
-			var speedChartData = []
-			var pingChartData = []
+        var balloons = {
+            'speed': "Скорость: <b>[[value]]</b> КБ/с",
+            'pingMin': "Пинг min: <b>[[value]]</b> мс",
+            'pingAvg': "Пинг avg: <b>[[value]]</b> мс",
+            'pingMax': "Пинг max: <b>[[value]]</b> мс",
+            'pingLossPercent': "Потери пакетов: <b>[[value]]</b>%"
+        };
 
-	    	for(var i = 0; i < data.length; i++) {
+		api.getData(function(data) {
+            if (data.length == 0) {
+                return;
+            }
 
-	    		current = data[i];
+            for(var i = 0; i < data.length; ++i) {
+                data[i].date = new Date(data[i][timestampField]);
+            }
 
-	    		speedChartData.push({
-		            date: new Date(current['date'] * 1000),
-		            speed: current['speed']
-	        	});	        	
+            var fields = Object.getOwnPropertyNames(data[0]);
+            var valueAxes = [];
+            var graphs = [];
 
-	        	pingChartData.push({
-		            date: new Date(current['date'] * 1000),
-		            ping: current['ping']
-	        	});	
-	    	}
-	    	
-			var speedChart = AmCharts.makeChart("speedchart", {
-			    "type": "serial",
-			    "theme": "light",
-			    "pathToImages": "http://www.amcharts.com/lib/3/images/",
-			    "dataProvider": speedChartData,
-			    "valueAxes": [{
-			        "axisAlpha": 0.2,
-			        "dashLength": 1,
-			        "position": "left"
-			    }],
-			    "mouseWheelZoomEnabled":true,
-			    "graphs": [{
-			        "id":"g1",
-			        "balloonText": "[[category]]<br/><b><span style='font-size:14px;'>value: [[value]]</span></b>",
-			        "bullet": "round",
-			        "bulletBorderAlpha": 1,
-					"bulletColor":"#FFFFFF",
-			        "hideBulletsCount": 50,
-			        "title": "red line",
-			        "valueField": "speed",
-					"useLineColorForBulletBorder":true
-			    }],
-			    "chartScrollbar": {
-			        "autoGridCount": true,
-			        "graph": "g1",
-			        "scrollbarHeight": 40
-			    },
-			    "chartCursor": {
-			        "cursorPosition": "mouse"
-			    },
-			    "categoryField": "date",
-			    "categoryAxis": {
-			        "parseDates": true,
-			        "minPeriod": "mm",		        
-			        "axisColor": "#DADADA",
-			        "dashLength": 1,
-			        "minorGridEnabled": true
-			    }
-			});
+            for(var i = 0; i < fields.length; ++i) {
+                var field = fields[i];
 
-			var pingChart = AmCharts.makeChart("pingchart", {
-			    "type": "serial",
-			    "theme": "light",
-			    "pathToImages": "http://www.amcharts.com/lib/3/images/",
-			    "dataProvider": pingChartData,
-			    "valueAxes": [{
-			        "axisAlpha": 0.2,
-			        "dashLength": 1,
-			        "position": "left"
-			    }],
-			    "mouseWheelZoomEnabled":true,
-			    "graphs": [{
-			        "id":"g1",
-			        "balloonText": "[[category]]<br/><b><span style='font-size:14px;'>value: [[value]]</span></b>",
-			        "bullet": "round",
-			        "bulletBorderAlpha": 1,
-					"bulletColor":"#FFFFFF",
-			        "hideBulletsCount": 50,
-			        "title": "red line",
-			        "valueField": "ping",
-					"useLineColorForBulletBorder":true
-			    }],
-			    "chartScrollbar": {
-			        "autoGridCount": true,
-			        "graph": "g1",
-			        "scrollbarHeight": 40
-			    },
-			    "chartCursor": {
-			        "cursorPosition": "mouse"
-			    },
-			    "categoryField": "date",
-			    "categoryAxis": {
-			        "parseDates": true,
-			        "minPeriod": "mm",		        
-			        "axisColor": "#DADADA",
-			        "dashLength": 1,
-			        "minorGridEnabled": true
-			    }
-			});
+                if (ignoreFields.indexOf(field) > -1) {
+                    continue;
+                }
 
-			//chart.addListener("rendered", zoomChart);
-			//zoomChart();
+                valueAxes.push(
+                        {
+                            "id": field,
+                            "axisColor": COLORS[i],
+                            "axisThickness": 2
+                        }
+                );
+
+                graphs.push(
+                        {
+                            "valueAxis": field,
+                            "lineColor": COLORS[i],
+                            "bullet": "round",
+                            "bulletBorderThickness": 1,
+                            "hideBulletsCount": 30,
+                            "title": fieldNames[field],
+                            "valueField": field,
+                            "balloonText": "<div style='margin:5px; font-size:12px;'>" + balloons[field] + "</div>"
+                        }
+                )
+            }
+
+            var chart = AmCharts.makeChart("chartdiv", {
+                "type": "serial",
+                "theme": "light",
+                "dataProvider": data,
+                "graphs": graphs,
+                "chartScrollbar": {},
+                "chartCursor": {
+                    "cursorPosition": "mouse"
+                },
+                "valueAxis": valueAxes,
+                "categoryField": "date",
+                "legend": {
+                    "useGraphSettings": true
+                },
+                "categoryAxis": {
+                    "minPeriod": "mm",
+                    "parseDates": true
+                },
+                "numberFormatter": {
+                    "precision": 2
+                }
+            });
 	    });
-
-	
-		// this method is called when chart is first inited as we listen for "dataUpdated" event
-		function zoomChart() {
-		    // different zoom methods can be used - zoomToIndexes, zoomToDates, zoomToCategoryValues
-		    chart.zoomToIndexes(chartData.length - 40, chartData.length - 1);
-		}
-		
 	</script>
 </body>
 </html>
