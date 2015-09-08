@@ -51,6 +51,7 @@ api.getData(function(data) {
                 "lineColor": COLORS[i],
                 "bullet": "round",
                 "bulletBorderThickness": 1,
+                "lineThickness": 3,
                 "hideBulletsCount": 30,
                 "title": fieldNames[field],
                 "valueField": field,
