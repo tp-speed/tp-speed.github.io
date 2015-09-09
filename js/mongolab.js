@@ -121,7 +121,7 @@ MongoLab.prototype.get = function(endpoint, callback, params){
     callback = callback || function(){};
     params = params || '';
 
-    this.request(this.apiUrl+'/'+endpoint+'?apiKey='+this.apiKey+params, 'GET', callback);
+    this.request(this.apiUrl+'/'+endpoint+'?l=2147483647&apiKey='+this.apiKey+params, 'GET', callback);
 };
 
 MongoLab.prototype.post = function(endpoint, data, callback){
